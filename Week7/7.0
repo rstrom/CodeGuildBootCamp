@@ -1,0 +1,113 @@
+# Evening 7.0
+
+## Capstone Project
+### Schedule
+* 8.0 *Mon Apr 25*: Proposal due
+* 12.0 *Mon May 23*: Capstone work begins
+* 15.5 *Fri Jun 17*: Capstone due & class show and tell
+* TBD: Demo Day
+
+### Requirements
+Your capstone must encompass the following technology stack:
+* Python
+* Django
+* Postgres DB
+* HTML
+* CSS
+* JS
+
+For testing and documentation you must include:
+* README
+* docstrings
+* functional tests
+* unit tests
+
+Additionally you must follow best practices for software version control, virtual environments and deployment and follow standard coding style and conventions (PEP-8 for Python).
+
+
+## Django MVP: From 0 to 1 :rocket:
+As a group exercise we will create and deploy a Django blog, roughly following the Django Girls' Tutorial, [sections 8-12](http://tutorial.djangogirls.org/en/django_installation/).
+
+### Virtual Env & Set Up
+* create a new project directory and initialize a new virtual environment
+  * use the `pyvenv` command to initialize the virtual env
+  * activate the virtual env
+  * install django
+* create a new django project
+  * `(venv)$ django-admin startproject mvp .`
+
+### Blog Post Model
+* create a new `blog` app
+  * `(venv)$ python manage.py startapp blog`
+  * add `'blog'` to the `INSTALLED_APPS` list in `mvp/settings.py`
+* create a new `Post` model:
+
+```python
+from django.db import models
+from django.utils import timezone
+
+
+class Post(models.Model):
+    author = models.ForeignKey('auth.User')
+    title = models.CharField(max_length=200)
+    text = models.TextField()
+    created_date = models.DateTimeField(
+            default=timezone.now)
+    published_date = models.DateTimeField(
+            blank=True, null=True)
+
+    def publish(self):
+        self.published_date = timezone.now()
+        self.save()
+
+    def __str__(self):
+        return self.title
+```
+* add our new model to our database
+    * prepare migrations: `(venv)$ python manage.py makemigrations blog`
+    * apply migrations: `(venv)$ python manage.py migrate blog`
+
+### Django Admin
+To create, read, update and delete blog posts we will utilize Django's built in admin interface. Open `blog/admin.py` and replace its contents with:
+```python
+from django.contrib import admin
+from .models import Post
+
+admin.site.register(Post)
+```
+
+You will need a super user admin account to access the admin interface at /admin. Create one with the command: `(venv)$ python manage.py createsuperuser`.
+
+### Deployment
+* initialize a git repo and push it to your github
+  * make sure to ignore the database, venv directory and python cache files in your .gitignore:
+    ```
+*.pyc
+__pycache__
+venv
+db.sqlite3
+/static
+.DS_Store
+    ```
+* sign up for a pythonanywhere.com beginner account
+* from the pythonanywhere console git clone your repo
+* set up and activate a virtual env using the `virtualenv` command
+* under the pythonanywhere "Web" tab create a new web app using the **manual** configuration.
+* then:
+  * link your virtual env `/home/<username>/<projectname>/venv`
+  * update WSGI configuration file under "Code" with the following:
+
+```python
+import os
+import sys
+
+path = '/home/<username>/<projectname>'  # use your own username here
+if path not in sys.path:
+    sys.path.append(path)
+
+os.environ['DJANGO_SETTINGS_MODULE'] = '<projectname>.settings'
+
+from django.core.wsgi import get_wsgi_application
+from django.contrib.staticfiles.handlers import StaticFilesHandler
+application = StaticFilesHandler(get_wsgi_application())
+```
